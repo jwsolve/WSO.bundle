@@ -1,0 +1,127 @@
+import re
+import os
+import sys
+
+try:
+	path = os.getcwd().split("?\\")[1].split('Plug-in Support')[0]+"Plug-ins\WSO.bundle\Contents\Services\URL\WSO\Modules"
+except:
+	path = os.getcwd().split("Plug-in Support")[0]+"Plug-ins/WSO.bundle/Contents/Services/URL/WSO/Modules"
+if path not in sys.path:
+	sys.path.append(path)
+
+import jsbeautifier
+
+
+########################################################################################
+def NormalizeURL(url):
+
+	return url
+
+########################################################################################
+def MetadataObjectForURL(url):
+
+	page = HTML.ElementFromURL(url)
+
+	try:
+		title = page.xpath("//span[@class='PostHeader']/a/text()")[0]
+	except:
+		title = ""
+	url = url
+	thumb = ""
+
+	return VideoClipObject(
+		title = title,
+		thumb = thumb
+	)
+
+########################################################################################
+def MediaObjectsForURL(url):
+
+	return [
+        	MediaObject(
+			parts = [
+				PartObject(
+					key = 
+						Callback(
+							PlayVideo,
+							url = url,
+							fmt = 'hi',
+							post_url = url
+						)
+					)
+				],
+			video_resolution = 720,
+			bitrate = 1500,
+			container = Container.MP4,
+			video_codec = VideoCodec.H264,
+			audio_codec = AudioCodec.AAC,
+			audio_channels = 2,
+			optimized_for_streaming = True if Client.Product != 'Plex Web' else False
+			)
+	]
+
+########################################################################################
+@indirect
+def PlayVideo(url, fmt):
+	html = HTML.ElementFromURL(url)
+	view_url = ""
+	video_url = ""
+	for each in html.xpath("//td[contains(@class,'tdhost')]"):
+		try:
+			view_url = str(each.xpath("./a/@href")[0]).strip('\r').strip('\n') + "," + str(view_url)
+		except:
+			continue
+
+	view_url = view_url.rstrip(',')
+	view_url = sorted(view_url.split(','), key=str.lower)
+
+	for vurl in view_url:
+		if "allmyvideo" in vurl:
+			vidurl = vurl.replace('.net/','.net/embed-',1) + '.html'
+			allmyvideos = HTTP.Request(vidurl, cacheTime = CACHE_1MONTH).content
+			try:
+				video_url = Regex('"file"\s:\s"([^"]+)"').search(allmyvideos).groups()[0]
+				break
+			except:
+				pass
+		if "exashare" in vurl:
+			vurl = vurl.replace('.com/','.com/embed-',1) + '.html'
+			exashare = HTTP.Request(vurl, cacheTime = CACHE_1MONTH).content
+			try:
+				video_url = Regex('file:\s"([^"]+)"').search(exashare).groups()[0]
+				break
+			except:
+				continue
+		elif "nowvideo" in vurl:
+			vurl = vurl.replace('.com/','.com/embed-',1) + '.html'
+			nowvideo = HTTP.Request(vurl, cacheTime = CACHE_1MONTH).content
+			try:
+				video_url = Regex('file:\s"([^"]+)"').search(exashare).groups()[0]
+				break
+			except:
+				continue
+		elif "vidspot" in vurl:
+			vurl = vurl.replace('.net/','.net/embed-',1) + '.html'
+			vidspot = HTTP.Request(vurl, cacheTime = CACHE_1MONTH).content
+			try:
+				video_url = Regex('"sources" : \[\n\s+{\n\s+"file" : "([^"]+)"').search(vidspot).groups()[0]
+				break
+			except:
+				continue
+		elif "vodlocker" in vurl:
+			vurl = vurl.replace('.com/','.com/embed-',1) + '.html'
+			vodlocker = HTTP.Request(vurl, cacheTime = CACHE_1MONTH).content
+			try:
+				video_url = Regex('file: "([^"]+)"').search(vodlocker).groups()[0]
+				break
+			except:
+				continue
+		elif "vshare" in vurl:
+			vshare = HTTP.Request(vurl, cacheTime = CACHE_1MONTH).content
+			try:
+				video_url = Regex('file:\s"([^"]+)"').search(vshare).groups()[0]
+				break
+			except:
+				continue
+
+	return IndirectResponse(VideoClipObject, key=video_url)

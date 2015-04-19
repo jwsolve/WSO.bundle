@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0">
+<dict>
+  <key>URL</key>
+  <dict>
+    <key>WSO</key>
+    <dict>
+      <key>URLPatterns</key>
+      <array>
+        <string>http://watchseries-online.ch/.+</string>
+	<string>ipad:http://watchseries-online.ch/.+</string>
+      </array>
+    </dict>
+  </dict>
+</dict>
+</plist>
